@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 public class User {
     @Id
     private UUID id;
+    
     private LocalDateTime createdAt;
     private String username;
     private String passwordHash;
