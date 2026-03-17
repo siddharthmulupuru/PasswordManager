@@ -1,20 +1,23 @@
 package com.siddharthmulupuru.passwordmanager.entity;
 
-import java.util.UUID;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users")
 public class User {
     @Id
     private UUID id;
+
+    @Column(unique = true)
+    private String username;
     
     private LocalDateTime createdAt;
-    private String username;
     private String passwordHash;
 
     public User() {
