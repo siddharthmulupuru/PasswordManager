@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.siddharthmulupuru.passwordmanager.entity.User;
 import com.siddharthmulupuru.passwordmanager.repository.UserRepository;
+import com.siddharthmulupuru.passwordmanager.security.JWTService;
 
 @Service
 public class UserService {
@@ -15,6 +16,9 @@ public class UserService {
     
     @Autowired
     private Argon2PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JWTService jwtService;
 
     // Register the method that registers the user given a username and password. Returns a JSON
     // Web Token. If registration failed, throws a Runtime Exception.
@@ -27,7 +31,7 @@ public class UserService {
         User user = new User(username, hashedPassword);
         userRepository.save(user);
 
-        return "token";
+        return jwtService.generateToken(user);
     }
 
     // Login method that logs in the user given a username and password. Returns a JSON Web
@@ -42,7 +46,7 @@ public class UserService {
         User foundUser = user.get();
 
         if (passwordEncoder.matches(password, foundUser.getPasswordHash())) {
-            return "token";
+            return jwtService.generateToken(foundUser);
         }
 
         throw new RuntimeException("Invalid username or password");
