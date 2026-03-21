@@ -12,6 +12,8 @@ import com.siddharthmulupuru.passwordmanager.dto.VaultEntryRequest;
 import com.siddharthmulupuru.passwordmanager.dto.VaultEntryResponse;
 import com.siddharthmulupuru.passwordmanager.entity.User;
 import com.siddharthmulupuru.passwordmanager.entity.VaultEntry;
+import com.siddharthmulupuru.passwordmanager.exception.UnauthorizedException;
+import com.siddharthmulupuru.passwordmanager.exception.VaultEntryNotFoundException;
 import com.siddharthmulupuru.passwordmanager.repository.VaultEntryRepository;
 
 @Service
@@ -46,13 +48,13 @@ public class VaultEntryService {
         Optional<VaultEntry> entryToUpdate = vaultEntryRepository.findById(id);
 
         if (entryToUpdate.isEmpty()) {
-            throw new RuntimeException("Vault Entry not found");
+            throw new VaultEntryNotFoundException();
         }
 
         VaultEntry entry = entryToUpdate.get();
 
         if (!entry.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Unauthorized");
+            throw new UnauthorizedException();
         }
 
         entry.setEncryptedName(request.getEncryptedName());
@@ -70,13 +72,13 @@ public class VaultEntryService {
         Optional<VaultEntry> entryToDelete = vaultEntryRepository.findById(id);
 
         if (entryToDelete.isEmpty()) {
-            throw new RuntimeException("Vault Entry not found");
+            throw new VaultEntryNotFoundException();
         }
 
         VaultEntry entry = entryToDelete.get();
 
         if (!entry.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Unauthorized");
+            throw new UnauthorizedException();
         }
 
         vaultEntryRepository.delete(entry);

@@ -6,6 +6,8 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.siddharthmulupuru.passwordmanager.entity.User;
+import com.siddharthmulupuru.passwordmanager.exception.InvalidCredentialsException;
+import com.siddharthmulupuru.passwordmanager.exception.UsernameAlreadyTakenException;
 import com.siddharthmulupuru.passwordmanager.repository.UserRepository;
 import com.siddharthmulupuru.passwordmanager.security.JWTService;
 
@@ -24,7 +26,7 @@ public class UserService {
     // Web Token. If registration failed, throws a Runtime Exception.
     public String register(String username, String password) {
         if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Username already taken");
+            throw new UsernameAlreadyTakenException();
         }
 
         String hashedPassword = passwordEncoder.encode(password);
@@ -40,7 +42,7 @@ public class UserService {
         Optional<User> user = userRepository.findByUsername(username);
 
         if (user.isEmpty()) {
-            throw new RuntimeException("Invalid username or password");
+            throw new InvalidCredentialsException();
         }
 
         User foundUser = user.get();
@@ -49,6 +51,6 @@ public class UserService {
             return jwtService.generateToken(foundUser);
         }
 
-        throw new RuntimeException("Invalid username or password");
+        throw new InvalidCredentialsException();
     }
 }
