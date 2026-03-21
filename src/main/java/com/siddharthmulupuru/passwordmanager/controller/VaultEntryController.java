@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,23 +27,27 @@ public class VaultEntryController {
     private VaultEntryService vaultEntryService;
 
     @GetMapping
-    public List<VaultEntryResponse> getAllEntries() {
-        return vaultEntryService.getAllEntries(getCurrentUser());
+    public ResponseEntity<List<VaultEntryResponse>> getAllEntries() {
+        List<VaultEntryResponse> response = vaultEntryService.getAllEntries(getCurrentUser());
+        return ResponseEntity.status(200).body(response);
     }
 
     @PostMapping
-    public VaultEntryResponse createEntry(@RequestBody VaultEntryRequest request) {
-        return vaultEntryService.createEntry(getCurrentUser(), request);
+    public ResponseEntity<VaultEntryResponse> createEntry(@RequestBody VaultEntryRequest request) {
+        VaultEntryResponse response = vaultEntryService.createEntry(getCurrentUser(), request);
+        return ResponseEntity.status(201).body(response);
     }
 
     @PutMapping("/{id}")
-    public VaultEntryResponse updateEntry(@PathVariable UUID id, @RequestBody VaultEntryRequest request) {
-        return vaultEntryService.updateEntry(id, getCurrentUser(), request);
+    public ResponseEntity<VaultEntryResponse> updateEntry(@PathVariable UUID id, @RequestBody VaultEntryRequest request) {
+        VaultEntryResponse response = vaultEntryService.updateEntry(id, getCurrentUser(), request);
+        return ResponseEntity.status(200).body(response);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteEntry(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteEntry(@PathVariable UUID id) {
         vaultEntryService.deleteEntry(id, getCurrentUser());
+        return ResponseEntity.noContent().build();
     }
 
     private User getCurrentUser() {

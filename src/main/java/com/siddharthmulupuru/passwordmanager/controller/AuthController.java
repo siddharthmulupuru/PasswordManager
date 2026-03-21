@@ -1,6 +1,7 @@
 package com.siddharthmulupuru.passwordmanager.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,12 +18,14 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/register")
-    public String register(@RequestBody RegisterRequest request) {
-        return userService.register(request.getUsername(), request.getPassword());
+    public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
+        String token = userService.register(request.getUsername(), request.getPassword());
+        return ResponseEntity.status(201).body(token);
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest request) {
-        return userService.login(request.getUsername(), request.getPassword());
+    public ResponseEntity<String> login(@RequestBody LoginRequest request) {
+        String token = userService.login(request.getUsername(), request.getPassword());
+        return ResponseEntity.status(200).body(token);
     }
 }
