@@ -9,6 +9,6 @@ async function authenticate(url, username, password) {
         body: JSON.stringify({username: username, password: password})
     });
 
-    const data = await response.json();
+    const data = await response.text();
     return data;
 }
