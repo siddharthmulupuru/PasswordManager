@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Meta info, title, CSS links go here -->
+    <title>Login</title>
+    <script src="auth.js"></script>
+  </head>
+  <body>
+    <!-- Everything visible on the page goes here -->
+    <h1>Login</h1>
+    <input
+        type="text"
+        id="username"
+        placeholder="Username" />
+    <input
+        type="password"
+        id="password"
+        placeholder="Password"/>
+    <button
+        id="loginButton"
+        type="button">Login</button>
+    <div
+        id="errorMessage"
+        style="display:none;">Something went wrong</div>
+    <script>
+        document.getElementById("loginButton").onclick = async function() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            
+            const url = "/api/auth/login"
+            const token = await authenticate(url, username, password)
+            console.log(token);
+        };
+    </script>
+  </body>
+</html>
