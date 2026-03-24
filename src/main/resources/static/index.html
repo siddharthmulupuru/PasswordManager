@@ -21,15 +21,24 @@
         type="button">Login</button>
     <div
         id="errorMessage"
-        style="display:none;">Something went wrong</div>
+        style="display:none;">Invalid username or password</div>
     <script>
+        // Gets username and password, sends to server to login, gets JWT and stores in
+        // sessionStorage, redirects to vault.html page. If error, displays error message.
         document.getElementById("loginButton").onclick = async function() {
             const username = document.getElementById("username").value;
             const password = document.getElementById("password").value;
             
             const url = "/api/auth/login"
             const token = await authenticate(url, username, password)
-            console.log(token);
+
+            // If status is not good, then display the error
+            if (token === null) {
+                document.getElementById("errorMessage").style.display = "block";
+            } else {
+                sessionStorage.setItem("token", token);
+                window.location.href = "/vault.html";
+            }
         };
     </script>
   </body>
