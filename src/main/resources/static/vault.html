@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Vault</title>
+        <script src="api.js"></script>
+    </head>
+    <body>
+        <h1>Vault</h1>
+        <div id="vaultList"></div>
+        <div id="editModal" style="display:none">
+            <input
+                type="text"
+                id="editName"
+                placeholder="Name"/>
+            <input
+                type="text"
+                id="editWebsite"
+                placeholder="Website"/>
+            <input
+                type="text"
+                id="editUsername"
+                placeholder="Username"/>
+            <input
+                type="password"
+                id="editPassword"
+                placeholder="Password"/>
+            <input
+                type="text"
+                id="editDescription"
+                placeholder="Description"/>
+            <button id="saveButton">Save</button>
+            <button id="cancelButton">Cancel</button>
+        </div>
+        
+        <script>
+            window.onload = async function() {
+                if (sessionStorage.getItem("token") === null) {
+                    window.location.href = "/index.html"
+                    return;
+                }
+                
+                const vaultEntries = await getVaultEntries();
+                
+                let currentEditId = null;
+                vaultEntries.forEach((element, index) => {
+                    // Big container for each vault entry
+                    const container = document.createElement("div");
+
+                    // All text fields
+                    const horizontalContainer = document.createElement("div");
+                    horizontalContainer.style.display = "flex";
+                    horizontalContainer.style.gap = "10px";
+
+                    const name = document.createElement("h3");
+                    name.textContent = (index + 1) + ". " + element.encryptedName;
+                    container.appendChild(name);
+
+                    const website = document.createElement("p");
+                    website.textContent = "Website: " + element.encryptedWebsite;
+                    horizontalContainer.appendChild(website);
+
+                    const username = document.createElement("p");
+                    username.textContent = "Username: " + element.encryptedWebsiteUsername;
+                    horizontalContainer.appendChild(username);
+
+                    const password = document.createElement("p");
+                    password.textContent = "Password: " + element.encryptedWebsitePassword;
+                    horizontalContainer.appendChild(password);
+
+                    const description = document.createElement("p");
+                    description.textContent = "Description: " + element.encryptedDescription;
+                    horizontalContainer.appendChild(description);
+
+                    // Buttons
+                    const buttonContainer = document.createElement("div");
+                    buttonContainer.style.display = "flex";
+                    buttonContainer.style.gap = "10px";
+
+                    const editButton = document.createElement("button");
+                    editButton.textContent = "Edit";
+                    buttonContainer.append(editButton);
+
+                    editButton.onclick = function() {
+                        document.getElementById("editName").value = element.encryptedName;
+                        document.getElementById("editName").placeholder = element.encryptedName;
+                        
+                        document.getElementById("editWebsite").value = element.encryptedWebsite;
+                        document.getElementById("editWebsite").placeholder = element.encryptedWebsite;
+                        
+                        document.getElementById("editUsername").value = element.encryptedWebsiteUsername;
+                        document.getElementById("editUsername").placeholder = element.encryptedWebsiteUsername;
+                        
+                        document.getElementById("editPassword").value = element.encryptedWebsitePassword;
+                        document.getElementById("editPassword").placeholder = element.encryptedWebsitePassword;
+                        
+                        document.getElementById("editDescription").value = element.encryptedDescription;
+                        document.getElementById("editDescription").placeholder = element.encryptedDescription;
+
+                        currentEditId = element.id;
+                        
+                        document.getElementById("editModal").style.display = "block";
+                    };
+
+                    document.getElementById("cancelButton").onclick = function() {
+                        document.getElementById("editModal").style.display = "none";
+                    };
+
+                    document.getElementById("saveButton").onclick = async function() {
+                        const entry = {
+                            id: currentEditId,
+                            encryptedName: document.getElementById("editName").value,
+                            encryptedWebsite: document.getElementById("editWebsite").value,
+                            encryptedWebsiteUsername: document.getElementById("editUsername").value,
+                            encryptedWebsitePassword: document.getElementById("editPassword").value,
+                            encryptedDescription: document.getElementById("editDescription").value
+                        };
+                        const success = await updateVaultEntry(entry);
+                        if (success !== null) {
+                            document.getElementById("editModal").style.display = "none";
+                            window.location.reload();
+                        }
+                    }
+
+                    const deleteButton = document.createElement("button");
+                    deleteButton.textContent = "Delete";
+                    buttonContainer.append(deleteButton);
+
+                    deleteButton.onclick = async function() {
+                        const success = await deleteVaultEntry(element.id);
+                        if (success) {
+                            window.location.reload();
+                        }
+                    };
+
+                    // Append everything to show on screen
+                    container.append(horizontalContainer);
+                    container.append(buttonContainer);
+                    document.getElementById("vaultList").appendChild(container);
+                });
+            }
+        </script>
+    </body>
+</html>
