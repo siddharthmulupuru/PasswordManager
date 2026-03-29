@@ -1,7 +1,6 @@
-const token = sessionStorage.getItem("token");
-
 // Gets all the user's vault entries as JSON data. Returns null if an error occurs.
 async function getVaultEntries() {
+    const token = sessionStorage.getItem("token");
     const url = "/api/vault"
     const response = await fetch(url, {
         method: "GET",
@@ -21,6 +20,7 @@ async function getVaultEntries() {
 // Deletes the vault entry based on the entryId. Returns false if an error occurs and
 // true if succeeded.
 async function deleteVaultEntry(entryId) {
+    const token = sessionStorage.getItem("token");
     const url = "/api/vault/" + entryId;
     const response = await fetch(url, {
         method: "DELETE",
@@ -37,6 +37,7 @@ async function deleteVaultEntry(entryId) {
 }
 
 async function updateVaultEntry(entry) {
+    const token = sessionStorage.getItem("token");
     const url = "/api/vault/" + entry.id;
     const response = await fetch(url, {
         method: "PUT",
