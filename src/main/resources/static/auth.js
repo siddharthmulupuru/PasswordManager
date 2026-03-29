@@ -14,6 +14,6 @@ async function authenticate(url, username, password) {
         return null;
     }
 
-    const data = await response.text();
-    return data;
+    const data = await response.json();
+    return {token: data.token, salt: data.salt};
 }

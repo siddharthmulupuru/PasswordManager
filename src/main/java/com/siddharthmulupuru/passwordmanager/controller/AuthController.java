@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.siddharthmulupuru.passwordmanager.dto.LoginRequest;
+import com.siddharthmulupuru.passwordmanager.dto.LoginResponse;
 import com.siddharthmulupuru.passwordmanager.dto.RegisterRequest;
 import com.siddharthmulupuru.passwordmanager.service.UserService;
 
@@ -18,14 +19,16 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
-        String token = userService.register(request.getUsername(), request.getPassword());
-        return ResponseEntity.status(201).body(token);
+    public ResponseEntity<LoginResponse> register(@RequestBody RegisterRequest request) {
+        LoginResponse loginResponse = userService.register(request.getUsername(), request.getPassword());
+
+        return ResponseEntity.status(201).body(loginResponse);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest request) {
-        String token = userService.login(request.getUsername(), request.getPassword());
-        return ResponseEntity.status(200).body(token);
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+        LoginResponse loginResponse = userService.login(request.getUsername(), request.getPassword());
+
+        return ResponseEntity.status(200).body(loginResponse);
     }
 }

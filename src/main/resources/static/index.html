@@ -266,13 +266,14 @@
 
       document.getElementById("errorMessage").style.display = "none";
       const url = "/api/auth/login";
-      const token = await authenticate(url, username, password);
+      const data = await authenticate(url, username, password);
 
       // If status is not good, then display the error
-      if (token === null) {
+      if (data === null) {
         document.getElementById("errorMessage").style.display = "block";
       } else {
-        sessionStorage.setItem("token", token);
+        sessionStorage.setItem("token", data.token);
+        sessionStorage.setItem("salt", data.salt);
         window.location.href = "/vault.html";
       }
     };
