@@ -87,3 +87,28 @@ async function createVaultEntry(entry) {
     const data = await response.json();
     return data;
 }
+
+async function changePassword(currentPassword, newPassword, newSalt, reEncryptedEntries) {
+    const token = sessionStorage.getItem("token");
+    const url = "/api/auth/password";
+    const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+            newSalt: newSalt,
+            entries: reEncryptedEntries
+        })
+    });
+
+    if (response.status !== 200) {
+        return null;
+    }
+
+    const data = await response.json();
+    return data;
+}

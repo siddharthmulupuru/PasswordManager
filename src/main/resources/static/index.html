@@ -699,14 +699,19 @@
       const vaultList = document.getElementById("vaultList");
       vaultList.innerHTML = '';
 
+      const safeDecrypt = async (val) => {
+          if (!val) return '';
+          return await decryptFromString(encryptionKey, val);
+      };
+
       const decryptedEntries = await Promise.all(
         globalVaultEntries.map(async entry => ({
-          ...entry,
-          encryptedName: await decryptFromString(encryptionKey, entry.encryptedName),
-          encryptedWebsite: await decryptFromString(encryptionKey, entry.encryptedWebsite),
-          encryptedWebsiteUsername: await decryptFromString(encryptionKey, entry.encryptedWebsiteUsername),
-          encryptedWebsitePassword: await decryptFromString(encryptionKey, entry.encryptedWebsitePassword),
-          encryptedDescription: entry.encryptedDescription ? await decryptFromString(encryptionKey, entry.encryptedDescription) : null
+            ...entry,
+            encryptedName: await safeDecrypt(entry.encryptedName),
+            encryptedWebsite: await safeDecrypt(entry.encryptedWebsite),
+            encryptedWebsiteUsername: await safeDecrypt(entry.encryptedWebsiteUsername),
+            encryptedWebsitePassword: await safeDecrypt(entry.encryptedWebsitePassword),
+            encryptedDescription: await safeDecrypt(entry.encryptedDescription)
         }))
       );
 
@@ -763,12 +768,12 @@
 
         const webRow = document.createElement("div");
         webRow.className = "entry-detail";
-        webRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> <span>${element.encryptedWebsite}</span>`;
+        webRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> <span>${element.encryptedWebsite || ''}</span>`;
         card.appendChild(webRow);
 
         const userRow = document.createElement("div");
         userRow.className = "entry-detail";
-        userRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <span>${element.encryptedWebsiteUsername}</span>`;
+        userRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <span>${element.encryptedWebsiteUsername || ''}</span>`;
         card.appendChild(userRow);
 
         if (element.encryptedDescription) {
@@ -878,12 +883,85 @@
     };
 
     // --- Account Modal ---
-    document.getElementById("accountBtn").onclick = () => document.getElementById("accountModal").classList.add("active");
-    document.getElementById("cancelAccountBtn").onclick = () => document.getElementById("accountModal").classList.remove("active");
-    document.getElementById("saveAccountBtn").onclick = async () => {
-      // TODO: call change password API endpoint
+    document.getElementById("accountBtn").onclick = () => {
+      document.getElementById("acctCurrent").value = '';
+      document.getElementById("acctNew").value = '';
+      document.getElementById("acctConfirm").value = '';
+      document.getElementById("accountModal").classList.add("active");
+    };
+
+    document.getElementById("cancelAccountBtn").onclick = () => {
+      document.getElementById("acctCurrent").value = '';
+      document.getElementById("acctNew").value = '';
+      document.getElementById("acctConfirm").value = '';
       document.getElementById("accountModal").classList.remove("active");
     };
+
+    document.getElementById("saveAccountBtn").onclick = async () => {
+      const currentPassword = document.getElementById("acctCurrent").value;
+      const newPassword = document.getElementById("acctNew").value;
+      const confirmPassword = document.getElementById("acctConfirm").value;
+
+      if (!currentPassword || !newPassword || !confirmPassword) {
+          return;
+      }
+
+      if (newPassword !== confirmPassword) {
+          return;
+      }
+
+      // Derive old key to re-encrypt entries
+      const oldSalt = sessionStorage.getItem("salt");
+      const oldKey = await deriveKey(currentPassword, oldSalt);
+
+      // Generate new salt and derive new key
+      const newSalt = generateSalt();
+      const newKey = await deriveKey(newPassword, newSalt);
+
+      // Re-encrypt all vault entries with new key
+      const reEncryptedEntries = await Promise.all(
+        globalVaultEntries.map(async entry => {
+            const decryptedName = entry.encryptedName
+                ? await decryptFromString(oldKey, entry.encryptedName) : null;
+            const decryptedWebsite = entry.encryptedWebsite
+                ? await decryptFromString(oldKey, entry.encryptedWebsite) : null;
+            const decryptedUsername = entry.encryptedWebsiteUsername
+                ? await decryptFromString(oldKey, entry.encryptedWebsiteUsername) : null;
+            const decryptedPassword = entry.encryptedWebsitePassword
+                ? await decryptFromString(oldKey, entry.encryptedWebsitePassword) : null;
+            const decryptedDescription = entry.encryptedDescription
+                ? await decryptFromString(oldKey, entry.encryptedDescription) : null;
+
+            return {
+                id: entry.id,
+                encryptedName: decryptedName
+                    ? await encryptToString(newKey, decryptedName) : null,
+                encryptedWebsite: decryptedWebsite
+                    ? await encryptToString(newKey, decryptedWebsite) : null,
+                encryptedWebsiteUsername: decryptedUsername
+                    ? await encryptToString(newKey, decryptedUsername) : null,
+                encryptedWebsitePassword: decryptedPassword
+                    ? await encryptToString(newKey, decryptedPassword) : null,
+                encryptedDescription: decryptedDescription
+                    ? await encryptToString(newKey, decryptedDescription) : null
+            };
+        })
+    );
+
+      // Call API
+      const response = await changePassword(currentPassword, newPassword, newSalt, reEncryptedEntries);
+      console.log("response entries:", JSON.stringify(response.entries));
+
+      if (response !== null) {
+          // Update session with new token, salt, and key
+          sessionStorage.setItem("token", response.token);
+          sessionStorage.setItem("salt", newSalt);
+          encryptionKey = newKey;
+          globalVaultEntries = response.entries;
+          document.getElementById("accountModal").classList.remove("active");
+          await renderGrid();
+      }
+  };
 
     // --- Password Generator ---
     document.getElementById("generatePasswordBtn").onclick = () => {

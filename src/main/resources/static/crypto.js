@@ -60,6 +60,13 @@ async function decrypt(key, iv, ciphertext) {
     return decoder.decode(plaintext);
 }
 
+// Generates a cryptographically secure random 16-byte salt encoded as a Base64 string.
+// Used for key derivation when registering or changing the master password.
+function generateSalt() {
+    const saltBytes = crypto.getRandomValues(new Uint8Array(16));
+    return toBase64(saltBytes);
+}
+
 // Converts an ArrayBuffer or Uint8Array to a Base64 encoded string.
 function toBase64(buffer) {
     return btoa(String.fromCharCode(...new Uint8Array(buffer)));
