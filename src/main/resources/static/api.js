@@ -61,3 +61,29 @@ async function updateVaultEntry(entry) {
     const data = await response.json();
     return data;
 }
+
+async function createVaultEntry(entry) {
+    const token = sessionStorage.getItem("token");
+    const url = "/api/vault";
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            encryptedName: entry.encryptedName,
+            encryptedWebsite: entry.encryptedWebsite,
+            encryptedWebsiteUsername: entry.encryptedWebsiteUsername,
+            encryptedWebsitePassword: entry.encryptedWebsitePassword,
+            encryptedDescription: entry.encryptedDescription
+        })
+    });
+
+    if (response.status !== 201) {
+        return null;
+    }
+
+    const data = await response.json();
+    return data;
+}

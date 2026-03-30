@@ -4,6 +4,7 @@
   <title>Vault</title>
   <script src="auth.js"></script>
   <script src="api.js"></script>
+  <script src="crypto.js"></script>
   <style>
     :root {
       --bg-color: #0f172a;
@@ -24,6 +25,13 @@
       margin: 0;
       padding: 0;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
 
     body {
@@ -595,9 +603,7 @@
     let globalVaultEntries = [];
     let currentEditId = null;
     let entryToDelete = null;
-
-    // TODO: store encryption key in memory here after login
-    // let encryptionKey = null;
+    let encryptionKey = null;
 
     function showView(viewName) {
       document.getElementById("loginView").style.display = viewName === "login" ? "flex" : "none";
@@ -607,6 +613,21 @@
       } else {
         vaultView.classList.remove("active");
       }
+    }
+
+    ["editName", "editWebsite", "editUsername", "editPassword", "editDescription"].forEach(id => {
+        document.getElementById(id).addEventListener("input", checkModalFields);
+    });
+
+    function checkModalFields() {
+      const allNotFilled = 
+        !document.getElementById("editName").value &&
+        !document.getElementById("editWebsite").value &&
+        !document.getElementById("editUsername").value &&
+        !document.getElementById("editPassword").value &&
+        !document.getElementById("editDescription").value;
+      
+      document.getElementById("saveButton").disabled = allNotFilled;
     }
 
     async function loadVault() {
@@ -638,8 +659,7 @@
         sessionStorage.setItem("token", data.token);
         sessionStorage.setItem("salt", data.salt);
 
-        // TODO: client-side encryption goes here
-        // derive encryption key from password + salt and store in encryptionKey variable
+        encryptionKey = await deriveKey(password, data.salt);
 
         showView("vault");
         await loadVault();
@@ -649,8 +669,7 @@
     // --- Logout ---
     document.getElementById("logoutBtn").onclick = () => {
       sessionStorage.clear();
-      // TODO: clear encryption key from memory
-      // encryptionKey = null;
+      encryptionKey = null;
       globalVaultEntries = [];
       document.getElementById("vaultList").innerHTML = '';
       document.getElementById("username").value = '';
@@ -659,13 +678,24 @@
     };
 
     // --- Render Grid ---
-    function renderGrid() {
+    async function renderGrid() {
       const vaultList = document.getElementById("vaultList");
       vaultList.innerHTML = '';
 
+      const decryptedEntries = await Promise.all(
+        globalVaultEntries.map(async entry => ({
+          ...entry,
+          encryptedName: await decryptFromString(encryptionKey, entry.encryptedName),
+          encryptedWebsite: await decryptFromString(encryptionKey, entry.encryptedWebsite),
+          encryptedWebsiteUsername: await decryptFromString(encryptionKey, entry.encryptedWebsiteUsername),
+          encryptedWebsitePassword: await decryptFromString(encryptionKey, entry.encryptedWebsitePassword),
+          encryptedDescription: entry.encryptedDescription ? await decryptFromString(encryptionKey, entry.encryptedDescription) : null
+        }))
+      );
+
       const query = document.getElementById("searchInput").value.toLowerCase();
 
-      globalVaultEntries.forEach((element) => {
+      decryptedEntries.forEach((element) => {
         if (query && !element.encryptedName.toLowerCase().includes(query) &&
             !element.encryptedWebsite.toLowerCase().includes(query)) {
           return;
@@ -679,7 +709,6 @@
 
         const titleText = document.createElement("div");
         titleText.className = "entry-title";
-        // TODO: decrypt element.encryptedName before displaying
         titleText.textContent = element.encryptedName;
         headerRow.appendChild(titleText);
 
@@ -692,7 +721,6 @@
 
         editBtn.onclick = function () {
           document.getElementById("modalTitle").textContent = "Edit Entry";
-          // TODO: decrypt fields before populating modal inputs
           document.getElementById("editName").value = element.encryptedName;
           document.getElementById("editWebsite").value = element.encryptedWebsite;
           document.getElementById("editUsername").value = element.encryptedWebsiteUsername;
@@ -700,6 +728,7 @@
           document.getElementById("editDescription").value = element.encryptedDescription || '';
           currentEditId = element.id;
           document.getElementById("editModal").classList.add("active");
+          checkModalFields();
         };
 
         const delBtn = document.createElement("button");
@@ -717,20 +746,17 @@
 
         const webRow = document.createElement("div");
         webRow.className = "entry-detail";
-        // TODO: decrypt element.encryptedWebsite before displaying
         webRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> ${element.encryptedWebsite}`;
         card.appendChild(webRow);
 
         const userRow = document.createElement("div");
         userRow.className = "entry-detail";
-        // TODO: decrypt element.encryptedWebsiteUsername before displaying
         userRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ${element.encryptedWebsiteUsername}`;
         card.appendChild(userRow);
 
         if (element.encryptedDescription) {
           const descRow = document.createElement("div");
           descRow.className = "entry-desc";
-          // TODO: decrypt element.encryptedDescription before displaying
           descRow.textContent = element.encryptedDescription;
           card.appendChild(descRow);
         }
@@ -740,7 +766,6 @@
 
         const pwdInput = document.createElement("input");
         pwdInput.type = "password";
-        // TODO: decrypt element.encryptedWebsitePassword before displaying
         pwdInput.value = element.encryptedWebsitePassword;
         pwdInput.readOnly = true;
 
@@ -761,7 +786,6 @@
         copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
         copyBtn.onclick = async () => {
           try {
-            // TODO: decrypt before copying
             await navigator.clipboard.writeText(element.encryptedWebsitePassword);
             const originalIcon = copyBtn.innerHTML;
             copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
@@ -791,6 +815,7 @@
       document.getElementById("editDescription").value = "";
       currentEditId = null;
       document.getElementById("editModal").classList.add("active");
+      checkModalFields();
     };
 
     document.getElementById("cancelButton").onclick = () => {
@@ -800,14 +825,20 @@
     document.getElementById("saveButton").onclick = async function () {
       const entry = {
         id: currentEditId,
-        // TODO: encrypt each field before sending to server
-        encryptedName: document.getElementById("editName").value,
-        encryptedWebsite: document.getElementById("editWebsite").value,
-        encryptedWebsiteUsername: document.getElementById("editUsername").value,
-        encryptedWebsitePassword: document.getElementById("editPassword").value,
-        encryptedDescription: document.getElementById("editDescription").value
+        encryptedName: await encryptToString(encryptionKey, document.getElementById("editName").value),
+        encryptedWebsite: await encryptToString(encryptionKey, document.getElementById("editWebsite").value),
+        encryptedWebsiteUsername: await encryptToString(encryptionKey, document.getElementById("editUsername").value),
+        encryptedWebsitePassword: await encryptToString(encryptionKey, document.getElementById("editPassword").value),
+        encryptedDescription: await encryptToString(encryptionKey, document.getElementById("editDescription").value),
       };
-      const success = await updateVaultEntry(entry);
+
+      let success = null;
+      if (document.getElementById("modalTitle").textContent === "Add New Entry") {
+        success = await createVaultEntry(entry);
+      } else if (document.getElementById("modalTitle").textContent === "Edit Entry") {
+        success = await updateVaultEntry(entry);
+      }
+
       if (success !== null) {
         document.getElementById("editModal").classList.remove("active");
         await loadVault();
