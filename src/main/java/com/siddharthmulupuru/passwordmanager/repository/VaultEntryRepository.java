@@ -9,4 +9,5 @@ import com.siddharthmulupuru.passwordmanager.entity.VaultEntry;
 
 public interface VaultEntryRepository extends JpaRepository<VaultEntry, UUID> {
     List<VaultEntry> findByUser(User user);
+    void deleteByUser(User user);
 }

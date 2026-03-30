@@ -43,4 +43,5 @@ public class User {
     // Setter methods
     public void setUsername(String username) { this.username = username; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public void setSalt(String salt) { this.salt = salt; }
 }
