@@ -328,6 +328,10 @@
       font-size: 1.25rem;
       font-weight: 600;
       color: #fff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 200px;
     }
 
     .entry-actions {
@@ -344,9 +348,20 @@
       color: var(--text-secondary);
     }
 
+    .entry-detail svg {
+      flex-shrink: 0;
+    }
+
+    .entry-detail span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: calc(100% - 30px);
+    }
+
     .password-wrap {
       display: flex;
-      align-items: center;
+      align-items: left;
       background: rgba(15, 23, 42, 0.5);
       padding: 0.5rem;
       border-radius: 6px;
@@ -355,14 +370,17 @@
     }
 
     .password-wrap input {
-      background: transparent;
-      border: none;
-      color: var(--text-primary);
-      width: 100%;
-      font-family: monospace;
-      font-size: 1rem;
-      outline: none;
-      padding: 0;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        width: 100%;
+        font-family: monospace;
+        font-size: 1rem;
+        outline: none;
+        padding: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .password-wrap button {
@@ -380,6 +398,9 @@
       color: rgba(196, 181, 253, 0.7);
       margin-bottom: 1rem;
       line-height: 1.5;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     /* ===================== MODALS ===================== */
@@ -637,12 +658,8 @@
     }
 
     window.onload = function () {
-      if (sessionStorage.getItem("token") !== null) {
-        showView("vault");
-        loadVault();
-      } else {
-        showView("login");
-      }
+      sessionStorage.clear();
+      showView("login");
     };
 
     // --- Login ---
@@ -746,12 +763,12 @@
 
         const webRow = document.createElement("div");
         webRow.className = "entry-detail";
-        webRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> ${element.encryptedWebsite}`;
+        webRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> <span>${element.encryptedWebsite}</span>`;
         card.appendChild(webRow);
 
         const userRow = document.createElement("div");
         userRow.className = "entry-detail";
-        userRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ${element.encryptedWebsiteUsername}`;
+        userRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <span>${element.encryptedWebsiteUsername}</span>`;
         card.appendChild(userRow);
 
         if (element.encryptedDescription) {
@@ -766,7 +783,7 @@
 
         const pwdInput = document.createElement("input");
         pwdInput.type = "password";
-        pwdInput.value = element.encryptedWebsitePassword;
+        pwdInput.value = "••••••••••••••••••••";
         pwdInput.readOnly = true;
 
         const toggleBtn = document.createElement("button");
@@ -775,8 +792,10 @@
           if (pwdInput.type === "password") {
             pwdInput.type = "text";
             toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+            pwdInput.value = element.encryptedWebsitePassword;
           } else {
             pwdInput.type = "password";
+            pwdInput.value = "••••••••••••••••••••";
             toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
           }
         };
