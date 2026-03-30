@@ -1,3 +1,12 @@
+function handleUnauthorized(status) {
+    if (status === 401) {
+        sessionStorage.clear();
+        window.location.href = "/";
+        return true;
+    }
+    return false;
+}
+
 // Gets all the user's vault entries as JSON data. Returns null if an error occurs.
 async function getVaultEntries() {
     const token = sessionStorage.getItem("token");
@@ -10,6 +19,7 @@ async function getVaultEntries() {
     });
 
     if (response.status !== 200) {
+        handleUnauthorized(response.status);
         return null;
     }
 
@@ -30,6 +40,7 @@ async function deleteVaultEntry(entryId) {
     });
 
     if (response.status !== 204) {
+        handleUnauthorized(response.status);
         return false;
     }
 
@@ -55,6 +66,7 @@ async function updateVaultEntry(entry) {
     });
 
     if (response.status !== 200) {
+        handleUnauthorized(response.status);
         return null;
     }
 
@@ -81,6 +93,7 @@ async function createVaultEntry(entry) {
     });
 
     if (response.status !== 201) {
+        handleUnauthorized(response.status);
         return null;
     }
 
@@ -106,6 +119,7 @@ async function changePassword(currentPassword, newPassword, newSalt, reEncrypted
     });
 
     if (response.status !== 200) {
+        handleUnauthorized(response.status);
         return null;
     }
 
