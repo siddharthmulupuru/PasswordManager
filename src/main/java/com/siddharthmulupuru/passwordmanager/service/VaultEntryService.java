@@ -35,8 +35,8 @@ public class VaultEntryService {
     public VaultEntryResponse createEntry(User user, VaultEntryRequest request) {
         VaultEntry vaultEntry = new VaultEntry(
             user, request.getEncryptedName(), request.getEncryptedDescription(),
-            request.getEncryptedWebsiteUsername(), request.getEncryptedWebsitePassword(),
-            request.getEncryptedWebsite()
+            request.getEncryptedWebsiteUsername(), request.getEncryptedWebsiteEmail(),
+            request.getEncryptedWebsitePassword(), request.getEncryptedWebsite()
         );
 
         VaultEntry saved = vaultEntryRepository.save(vaultEntry);
@@ -60,6 +60,7 @@ public class VaultEntryService {
         entry.setEncryptedName(request.getEncryptedName());
         entry.setEncryptedDescription(request.getEncryptedDescription());
         entry.setEncryptedWebsiteUsername(request.getEncryptedWebsiteUsername());
+        entry.setEncryptedWebsiteEmail(request.getEncryptedWebsiteEmail());
         entry.setEncryptedWebsitePassword(request.getEncryptedWebsitePassword());
         entry.setEncryptedWebsite(request.getEncryptedWebsite());
 

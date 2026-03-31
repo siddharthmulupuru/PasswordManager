@@ -60,6 +60,7 @@ async function updateVaultEntry(entry) {
             encryptedName: entry.encryptedName,
             encryptedWebsite: entry.encryptedWebsite,
             encryptedWebsiteUsername: entry.encryptedWebsiteUsername,
+            encryptedWebsiteEmail: entry.encryptedWebsiteEmail,
             encryptedWebsitePassword: entry.encryptedWebsitePassword,
             encryptedDescription: entry.encryptedDescription
         })
@@ -87,6 +88,7 @@ async function createVaultEntry(entry) {
             encryptedName: entry.encryptedName,
             encryptedWebsite: entry.encryptedWebsite,
             encryptedWebsiteUsername: entry.encryptedWebsiteUsername,
+            encryptedWebsiteEmail: entry.encryptedWebsiteEmail,
             encryptedWebsitePassword: entry.encryptedWebsitePassword,
             encryptedDescription: entry.encryptedDescription
         })

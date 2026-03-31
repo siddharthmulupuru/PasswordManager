@@ -22,6 +22,7 @@ public class VaultEntry {
     private String encryptedName;
     private String encryptedDescription;
     private String encryptedWebsiteUsername;
+    private String encryptedWebsiteEmail;
     private String encryptedWebsitePassword;
     private String encryptedWebsite;
     private LocalDateTime createdAt;
@@ -34,12 +35,14 @@ public class VaultEntry {
     }
 
     public VaultEntry(User user, String encryptedName, String encryptedDescription,
-        String encryptedWebsiteUsername, String encryptedWebsitePassword, String encryptedWebsite) {
+        String encryptedWebsiteUsername, String encryptedWebsiteEmail,
+        String encryptedWebsitePassword, String encryptedWebsite) {
             this();
             this.user = user;
             this.encryptedName = encryptedName;
             this.encryptedDescription = encryptedDescription;
             this.encryptedWebsiteUsername = encryptedWebsiteUsername;
+            this.encryptedWebsiteEmail = encryptedWebsiteEmail;
             this.encryptedWebsitePassword = encryptedWebsitePassword;
             this.encryptedWebsite = encryptedWebsite;
     }
@@ -49,6 +52,7 @@ public class VaultEntry {
     public String getEncryptedName() { return encryptedName; }
     public String getEncryptedDescription() { return encryptedDescription; }
     public String getEncryptedWebsiteUsername() { return encryptedWebsiteUsername; }
+    public String getEncryptedWebsiteEmail() { return encryptedWebsiteEmail; }
     public String getEncryptedWebsitePassword() { return encryptedWebsitePassword; }
     public String getEncryptedWebsite() { return encryptedWebsite; }
     public UUID getId() { return id; }
@@ -75,6 +79,11 @@ public class VaultEntry {
 
     public void setEncryptedWebsiteUsername(String encryptedWebsiteUsername) {
         this.encryptedWebsiteUsername = encryptedWebsiteUsername;
+        setUpdatedAt();
+    }
+
+    public void setEncryptedWebsiteEmail(String encryptedWebsiteEmail) {
+        this.encryptedWebsiteEmail = encryptedWebsiteEmail;
         setUpdatedAt();
     }
 

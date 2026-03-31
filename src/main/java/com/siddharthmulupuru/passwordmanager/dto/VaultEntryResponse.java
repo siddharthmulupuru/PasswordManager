@@ -10,6 +10,7 @@ public class VaultEntryResponse {
     private String encryptedName;
     private String encryptedDescription;
     private String encryptedWebsiteUsername;
+    private String encryptedWebsiteEmail;
     private String encryptedWebsitePassword;
     private String encryptedWebsite;
     private LocalDateTime createdAt;
@@ -20,6 +21,7 @@ public class VaultEntryResponse {
         this.encryptedName = entry.getEncryptedName();
         this.encryptedDescription = entry.getEncryptedDescription();
         this.encryptedWebsiteUsername = entry.getEncryptedWebsiteUsername();
+        this.encryptedWebsiteEmail = entry.getEncryptedWebsiteEmail();
         this.encryptedWebsitePassword = entry.getEncryptedWebsitePassword();
         this.encryptedWebsite = entry.getEncryptedWebsite();
         this.createdAt = entry.getCreatedAt();
@@ -31,6 +33,7 @@ public class VaultEntryResponse {
     public String getEncryptedName() { return encryptedName; }
     public String getEncryptedDescription() { return encryptedDescription; }
     public String getEncryptedWebsiteUsername() { return encryptedWebsiteUsername; }
+    public String getEncryptedWebsiteEmail() { return encryptedWebsiteEmail; }
     public String getEncryptedWebsitePassword() { return encryptedWebsitePassword; }
     public String getEncryptedWebsite() { return encryptedWebsite; }
     public LocalDateTime getCreatedAt() { return createdAt; }

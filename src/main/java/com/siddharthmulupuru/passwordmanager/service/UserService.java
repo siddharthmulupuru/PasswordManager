@@ -93,7 +93,8 @@ public class UserService {
         for (VaultEntryRequest entryRequest : request.getEntries()) {
             VaultEntry entry = new VaultEntry(user, entryRequest.getEncryptedName(),
                 entryRequest.getEncryptedDescription(), entryRequest.getEncryptedWebsiteUsername(),
-                entryRequest.getEncryptedWebsitePassword(), entryRequest.getEncryptedWebsite());
+                entryRequest.getEncryptedWebsiteEmail(), entryRequest.getEncryptedWebsitePassword(),
+                entryRequest.getEncryptedWebsite());
             vaultEntryRepository.save(entry);
         }
 

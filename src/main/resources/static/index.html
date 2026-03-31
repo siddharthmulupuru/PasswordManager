@@ -555,12 +555,19 @@
       </div>
       <div class="input-group">
         <label for="editUsername">Username</label>
-        <input type="text" id="editUsername" class="input-field" placeholder="Username / Email">
+        <input type="text" id="editUsername" class="input-field" placeholder="Username">
+      </div>
+      <div class="input-group">
+        <label for="editEmail">Email</label>
+        <input type="text" id="editEmail" class="input-field" placeholder="Email">
       </div>
       <div class="input-group">
         <label for="editPassword">Password</label>
         <div class="password-generator-row">
           <input type="password" id="editPassword" class="input-field" placeholder="Password">
+          <button type="button" id="togglePasswordVisibility" class="btn-secondary" style="padding: 0 0.75rem; border-radius: 8px; width: auto; margin-top: 0;" title="Show / Hide">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
           <button type="button" id="generatePasswordBtn" class="btn-secondary" style="padding: 0 1rem; border-radius: 8px; width: auto; margin-top: 0;" title="Generate">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
@@ -569,7 +576,7 @@
         </div>
       </div>
       <div class="input-group">
-        <label for="editDescription">Description</label>
+        <label for="editDescription">Description / Notes</label>
         <textarea id="editDescription" class="input-field" rows="3" placeholder="Notes..."></textarea>
       </div>
       <div class="modal-actions">
@@ -636,18 +643,19 @@
       }
     }
 
-    ["editName", "editWebsite", "editUsername", "editPassword", "editDescription"].forEach(id => {
+    ["editName", "editWebsite", "editUsername", "editEmail", "editPassword", "editDescription"].forEach(id => {
         document.getElementById(id).addEventListener("input", checkModalFields);
     });
 
     function checkModalFields() {
-      const allNotFilled = 
+      const allNotFilled =
         !document.getElementById("editName").value &&
         !document.getElementById("editWebsite").value &&
         !document.getElementById("editUsername").value &&
+        !document.getElementById("editEmail").value &&
         !document.getElementById("editPassword").value &&
         !document.getElementById("editDescription").value;
-      
+
       document.getElementById("saveButton").disabled = allNotFilled;
     }
 
@@ -683,6 +691,12 @@
       }
     };
 
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Enter" && document.getElementById("loginView").style.display !== "none") {
+        document.getElementById("loginButton").click();
+      }
+    });
+
     // --- Logout ---
     document.getElementById("logoutBtn").onclick = () => {
       sessionStorage.clear();
@@ -710,6 +724,7 @@
             encryptedName: await safeDecrypt(entry.encryptedName),
             encryptedWebsite: await safeDecrypt(entry.encryptedWebsite),
             encryptedWebsiteUsername: await safeDecrypt(entry.encryptedWebsiteUsername),
+            encryptedWebsiteEmail: await safeDecrypt(entry.encryptedWebsiteEmail),
             encryptedWebsitePassword: await safeDecrypt(entry.encryptedWebsitePassword),
             encryptedDescription: await safeDecrypt(entry.encryptedDescription)
         }))
@@ -719,7 +734,8 @@
 
       decryptedEntries.forEach((element) => {
         if (query && !element.encryptedName.toLowerCase().includes(query) &&
-            !element.encryptedWebsite.toLowerCase().includes(query)) {
+            !element.encryptedWebsite.toLowerCase().includes(query) &&
+            !element.encryptedWebsiteEmail.toLowerCase().includes(query)) {
           return;
         }
 
@@ -746,7 +762,10 @@
           document.getElementById("editName").value = element.encryptedName;
           document.getElementById("editWebsite").value = element.encryptedWebsite;
           document.getElementById("editUsername").value = element.encryptedWebsiteUsername;
+          document.getElementById("editEmail").value = element.encryptedWebsiteEmail;
           document.getElementById("editPassword").value = element.encryptedWebsitePassword;
+          document.getElementById("editPassword").type = "password";
+          resetPasswordToggle();
           document.getElementById("editDescription").value = element.encryptedDescription || '';
           currentEditId = element.id;
           document.getElementById("editModal").classList.add("active");
@@ -775,6 +794,13 @@
         userRow.className = "entry-detail";
         userRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <span>${element.encryptedWebsiteUsername || ''}</span>`;
         card.appendChild(userRow);
+
+        if (element.encryptedWebsiteEmail) {
+          const emailRow = document.createElement("div");
+          emailRow.className = "entry-detail";
+          emailRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg> <span>${element.encryptedWebsiteEmail}</span>`;
+          card.appendChild(emailRow);
+        }
 
         if (element.encryptedDescription) {
           const descRow = document.createElement("div");
@@ -835,7 +861,10 @@
       document.getElementById("editName").value = "";
       document.getElementById("editWebsite").value = "";
       document.getElementById("editUsername").value = "";
+      document.getElementById("editEmail").value = "";
       document.getElementById("editPassword").value = "";
+      document.getElementById("editPassword").type = "password";
+      resetPasswordToggle();
       document.getElementById("editDescription").value = "";
       currentEditId = null;
       document.getElementById("editModal").classList.add("active");
@@ -852,6 +881,7 @@
         encryptedName: await encryptToString(encryptionKey, document.getElementById("editName").value),
         encryptedWebsite: await encryptToString(encryptionKey, document.getElementById("editWebsite").value),
         encryptedWebsiteUsername: await encryptToString(encryptionKey, document.getElementById("editUsername").value),
+        encryptedWebsiteEmail: await encryptToString(encryptionKey, document.getElementById("editEmail").value),
         encryptedWebsitePassword: await encryptToString(encryptionKey, document.getElementById("editPassword").value),
         encryptedDescription: await encryptToString(encryptionKey, document.getElementById("editDescription").value),
       };
@@ -927,6 +957,8 @@
                 ? await decryptFromString(oldKey, entry.encryptedWebsite) : null;
             const decryptedUsername = entry.encryptedWebsiteUsername
                 ? await decryptFromString(oldKey, entry.encryptedWebsiteUsername) : null;
+            const decryptedEmail = entry.encryptedWebsiteEmail
+                ? await decryptFromString(oldKey, entry.encryptedWebsiteEmail) : null;
             const decryptedPassword = entry.encryptedWebsitePassword
                 ? await decryptFromString(oldKey, entry.encryptedWebsitePassword) : null;
             const decryptedDescription = entry.encryptedDescription
@@ -940,6 +972,8 @@
                     ? await encryptToString(newKey, decryptedWebsite) : null,
                 encryptedWebsiteUsername: decryptedUsername
                     ? await encryptToString(newKey, decryptedUsername) : null,
+                encryptedWebsiteEmail: decryptedEmail
+                  ? await encryptToString(newKey, decryptedEmail) : null,
                 encryptedWebsitePassword: decryptedPassword
                     ? await encryptToString(newKey, decryptedPassword) : null,
                 encryptedDescription: decryptedDescription
@@ -950,7 +984,6 @@
 
       // Call API
       const response = await changePassword(currentPassword, newPassword, newSalt, reEncryptedEntries);
-      console.log("response entries:", JSON.stringify(response.entries));
 
       if (response !== null) {
           // Update session with new token, salt, and key
@@ -963,6 +996,24 @@
       }
   };
 
+    // --- Password Visibility Toggle (modal) ---
+    document.getElementById("togglePasswordVisibility").onclick = () => {
+      const pwdInput = document.getElementById("editPassword");
+      const btn = document.getElementById("togglePasswordVisibility");
+      if (pwdInput.type === "password") {
+        pwdInput.type = "text";
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+      } else {
+        pwdInput.type = "password";
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+      }
+    };
+
+    function resetPasswordToggle() {
+      document.getElementById("editPassword").type = "password";
+      document.getElementById("togglePasswordVisibility").innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+    }
+
     // --- Password Generator ---
     document.getElementById("generatePasswordBtn").onclick = () => {
       const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
@@ -971,6 +1022,7 @@
         pwd += chars.charAt(Math.floor(Math.random() * chars.length));
       }
       document.getElementById("editPassword").value = pwd;
+      checkModalFields();
     };
   </script>
 </body>
