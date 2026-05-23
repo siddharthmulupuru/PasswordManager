@@ -322,6 +322,7 @@
       margin-bottom: 1rem;
       border-bottom: 1px solid rgba(139, 92, 246, 0.1);
       padding-bottom: 0.75rem;
+      gap: 0.25rem;
     }
 
     .entry-title {
@@ -633,6 +634,19 @@
     let entryToDelete = null;
     let encryptionKey = null;
 
+    // Copy to clipboard helper
+    async function copyField(text, btn) {
+        if (!text) return;
+        try {
+            await navigator.clipboard.writeText(text);
+            const original = btn.innerHTML;
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            setTimeout(() => { btn.innerHTML = original; }, 1500);
+        } catch (err) {
+            console.error('Failed to copy', err);
+        }
+    }
+
     function showView(viewName) {
       document.getElementById("loginView").style.display = viewName === "login" ? "flex" : "none";
       const vaultView = document.getElementById("vaultView");
@@ -708,150 +722,179 @@
       showView("login");
     };
 
-    // --- Render Grid ---
+    // -- Render Grid --
     async function renderGrid() {
-      const vaultList = document.getElementById("vaultList");
-      vaultList.innerHTML = '';
+    const vaultList = document.getElementById("vaultList");
+    vaultList.innerHTML = '';
 
-      const safeDecrypt = async (val) => {
-          if (!val) return '';
-          return await decryptFromString(encryptionKey, val);
+    const safeDecrypt = async (val) => {
+      if (!val) return '';
+      return await decryptFromString(encryptionKey, val);
+    };
+
+    const decryptedEntries = await Promise.all(
+      globalVaultEntries.map(async entry => ({
+        ...entry,
+        encryptedName: await safeDecrypt(entry.encryptedName),
+        encryptedWebsite: await safeDecrypt(entry.encryptedWebsite),
+        encryptedWebsiteUsername: await safeDecrypt(entry.encryptedWebsiteUsername),
+        encryptedWebsiteEmail: await safeDecrypt(entry.encryptedWebsiteEmail),
+        encryptedWebsitePassword: await safeDecrypt(entry.encryptedWebsitePassword),
+        encryptedDescription: await safeDecrypt(entry.encryptedDescription)
+      }))
+    );
+
+    const query = document.getElementById("searchInput").value.toLowerCase();
+
+    decryptedEntries.forEach((element) => {
+      if (query && !element.encryptedName.toLowerCase().includes(query) &&
+          !element.encryptedWebsite.toLowerCase().includes(query) &&
+          !element.encryptedWebsiteEmail.toLowerCase().includes(query)) {
+        return;
+      }
+
+      const card = document.createElement("div");
+      card.className = "entry-card";
+
+      // ── Header row (title + copy title + edit + delete) ──
+      const headerRow = document.createElement("div");
+      headerRow.className = "entry-header";
+
+      const titleText = document.createElement("div");
+      titleText.className = "entry-title";
+      titleText.textContent = element.encryptedName;
+
+      const titleCopyBtn = document.createElement("button");
+      titleCopyBtn.className = "icon-btn";
+      titleCopyBtn.title = "Copy Name";
+      titleCopyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+      titleCopyBtn.onclick = (e) => { e.stopPropagation(); copyField(element.encryptedName, titleCopyBtn); };
+      
+      const actionsDiv = document.createElement("div");
+      actionsDiv.className = "entry-actions";
+
+      const editBtn = document.createElement("button");
+      editBtn.className = "icon-btn";
+      editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+      editBtn.onclick = function () {
+        document.getElementById("modalTitle").textContent = "Edit Entry";
+        document.getElementById("editName").value = element.encryptedName;
+        document.getElementById("editWebsite").value = element.encryptedWebsite;
+        document.getElementById("editUsername").value = element.encryptedWebsiteUsername;
+        document.getElementById("editEmail").value = element.encryptedWebsiteEmail;
+        document.getElementById("editPassword").value = element.encryptedWebsitePassword;
+        document.getElementById("editPassword").type = "password";
+        resetPasswordToggle();
+        document.getElementById("editDescription").value = element.encryptedDescription || '';
+        currentEditId = element.id;
+        document.getElementById("editModal").classList.add("active");
+        checkModalFields();
       };
 
-      const decryptedEntries = await Promise.all(
-        globalVaultEntries.map(async entry => ({
-            ...entry,
-            encryptedName: await safeDecrypt(entry.encryptedName),
-            encryptedWebsite: await safeDecrypt(entry.encryptedWebsite),
-            encryptedWebsiteUsername: await safeDecrypt(entry.encryptedWebsiteUsername),
-            encryptedWebsiteEmail: await safeDecrypt(entry.encryptedWebsiteEmail),
-            encryptedWebsitePassword: await safeDecrypt(entry.encryptedWebsitePassword),
-            encryptedDescription: await safeDecrypt(entry.encryptedDescription)
-        }))
-      );
+      const delBtn = document.createElement("button");
+      delBtn.className = "icon-btn";
+      delBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+      delBtn.onclick = function () {
+        entryToDelete = element.id;
+        document.getElementById("deleteModal").classList.add("active");
+      };
 
-      const query = document.getElementById("searchInput").value.toLowerCase();
+      actionsDiv.appendChild(titleCopyBtn);
+      actionsDiv.appendChild(editBtn);
+      actionsDiv.appendChild(delBtn);
 
-      decryptedEntries.forEach((element) => {
-        if (query && !element.encryptedName.toLowerCase().includes(query) &&
-            !element.encryptedWebsite.toLowerCase().includes(query) &&
-            !element.encryptedWebsiteEmail.toLowerCase().includes(query)) {
-          return;
+      headerRow.appendChild(titleText);
+      headerRow.appendChild(actionsDiv);
+      card.appendChild(headerRow);
+
+      // ── Website row ──
+      const webRow = document.createElement("div");
+      webRow.className = "entry-detail";
+      webRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg><span>${element.encryptedWebsite || ''}</span>`;
+      if (element.encryptedWebsite) {
+        const webCopyBtn = document.createElement("button");
+        webCopyBtn.className = "icon-btn";
+        webCopyBtn.style.marginLeft = "auto";
+        webCopyBtn.title = "Copy Website";
+        webCopyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+        webCopyBtn.onclick = (e) => { e.stopPropagation(); copyField(element.encryptedWebsite, webCopyBtn); };
+        webRow.appendChild(webCopyBtn);
+      }
+      card.appendChild(webRow);
+
+      // ── Username row ──
+      const userRow = document.createElement("div");
+      userRow.className = "entry-detail";
+      userRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span>${element.encryptedWebsiteUsername || ''}</span>`;
+      if (element.encryptedWebsiteUsername) {
+        const userCopyBtn = document.createElement("button");
+        userCopyBtn.className = "icon-btn";
+        userCopyBtn.style.marginLeft = "auto";
+        userCopyBtn.title = "Copy Username";
+        userCopyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+        userCopyBtn.onclick = (e) => { e.stopPropagation(); copyField(element.encryptedWebsiteUsername, userCopyBtn); };
+        userRow.appendChild(userCopyBtn);
+      }
+      card.appendChild(userRow);
+
+      // ── Email row ──
+      if (element.encryptedWebsiteEmail) {
+        const emailRow = document.createElement("div");
+        emailRow.className = "entry-detail";
+        emailRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg><span>${element.encryptedWebsiteEmail}</span>`;
+        const emailCopyBtn = document.createElement("button");
+        emailCopyBtn.className = "icon-btn";
+        emailCopyBtn.style.marginLeft = "auto";
+        emailCopyBtn.title = "Copy Email";
+        emailCopyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+        emailCopyBtn.onclick = (e) => { e.stopPropagation(); copyField(element.encryptedWebsiteEmail, emailCopyBtn); };
+        emailRow.appendChild(emailCopyBtn);
+        card.appendChild(emailRow);
+      }
+
+      // ── Description ──
+      if (element.encryptedDescription) {
+        const descRow = document.createElement("div");
+        descRow.className = "entry-desc";
+        descRow.textContent = element.encryptedDescription;
+        card.appendChild(descRow);
+      }
+
+      // ── Password row ──
+      const passRow = document.createElement("div");
+      passRow.className = "password-wrap";
+
+      const pwdInput = document.createElement("input");
+      pwdInput.type = "password";
+      pwdInput.value = "••••••••••••••••••••";
+      pwdInput.readOnly = true;
+
+      const toggleBtn = document.createElement("button");
+      toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+      toggleBtn.onclick = () => {
+        if (pwdInput.type === "password") {
+          pwdInput.type = "text";
+          pwdInput.value = element.encryptedWebsitePassword;
+          toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+        } else {
+          pwdInput.type = "password";
+          pwdInput.value = "••••••••••••••••••••";
+          toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
         }
+      };
 
-        const card = document.createElement("div");
-        card.className = "entry-card";
+      const copyBtn = document.createElement("button");
+      copyBtn.title = "Copy Password";
+      copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+      copyBtn.onclick = async () => { copyField(element.encryptedWebsitePassword, copyBtn); };
 
-        const headerRow = document.createElement("div");
-        headerRow.className = "entry-header";
-
-        const titleText = document.createElement("div");
-        titleText.className = "entry-title";
-        titleText.textContent = element.encryptedName;
-        headerRow.appendChild(titleText);
-
-        const actionsDiv = document.createElement("div");
-        actionsDiv.className = "entry-actions";
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "icon-btn";
-        editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
-
-        editBtn.onclick = function () {
-          document.getElementById("modalTitle").textContent = "Edit Entry";
-          document.getElementById("editName").value = element.encryptedName;
-          document.getElementById("editWebsite").value = element.encryptedWebsite;
-          document.getElementById("editUsername").value = element.encryptedWebsiteUsername;
-          document.getElementById("editEmail").value = element.encryptedWebsiteEmail;
-          document.getElementById("editPassword").value = element.encryptedWebsitePassword;
-          document.getElementById("editPassword").type = "password";
-          resetPasswordToggle();
-          document.getElementById("editDescription").value = element.encryptedDescription || '';
-          currentEditId = element.id;
-          document.getElementById("editModal").classList.add("active");
-          checkModalFields();
-        };
-
-        const delBtn = document.createElement("button");
-        delBtn.className = "icon-btn";
-        delBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-        delBtn.onclick = function () {
-          entryToDelete = element.id;
-          document.getElementById("deleteModal").classList.add("active");
-        };
-
-        actionsDiv.appendChild(editBtn);
-        actionsDiv.appendChild(delBtn);
-        headerRow.appendChild(actionsDiv);
-        card.appendChild(headerRow);
-
-        const webRow = document.createElement("div");
-        webRow.className = "entry-detail";
-        webRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> <span>${element.encryptedWebsite || ''}</span>`;
-        card.appendChild(webRow);
-
-        const userRow = document.createElement("div");
-        userRow.className = "entry-detail";
-        userRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <span>${element.encryptedWebsiteUsername || ''}</span>`;
-        card.appendChild(userRow);
-
-        if (element.encryptedWebsiteEmail) {
-          const emailRow = document.createElement("div");
-          emailRow.className = "entry-detail";
-          emailRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg> <span>${element.encryptedWebsiteEmail}</span>`;
-          card.appendChild(emailRow);
-        }
-
-        if (element.encryptedDescription) {
-          const descRow = document.createElement("div");
-          descRow.className = "entry-desc";
-          descRow.textContent = element.encryptedDescription;
-          card.appendChild(descRow);
-        }
-
-        const passRow = document.createElement("div");
-        passRow.className = "password-wrap";
-
-        const pwdInput = document.createElement("input");
-        pwdInput.type = "password";
-        pwdInput.value = "••••••••••••••••••••";
-        pwdInput.readOnly = true;
-
-        const toggleBtn = document.createElement("button");
-        toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
-        toggleBtn.onclick = () => {
-          if (pwdInput.type === "password") {
-            pwdInput.type = "text";
-            toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
-            pwdInput.value = element.encryptedWebsitePassword;
-          } else {
-            pwdInput.type = "password";
-            pwdInput.value = "••••••••••••••••••••";
-            toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
-          }
-        };
-
-        const copyBtn = document.createElement("button");
-        copyBtn.title = "Copy Password";
-        copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-        copyBtn.onclick = async () => {
-          try {
-            await navigator.clipboard.writeText(element.encryptedWebsitePassword);
-            const originalIcon = copyBtn.innerHTML;
-            copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-            setTimeout(() => { copyBtn.innerHTML = originalIcon; }, 1500);
-          } catch (err) {
-            console.error('Failed to copy', err);
-          }
-        };
-
-        passRow.appendChild(pwdInput);
-        passRow.appendChild(copyBtn);
-        passRow.appendChild(toggleBtn);
-        card.appendChild(passRow);
-        vaultList.appendChild(card);
-      });
-    }
+      passRow.appendChild(pwdInput);
+      passRow.appendChild(copyBtn);
+      passRow.appendChild(toggleBtn);
+      card.appendChild(passRow);
+      vaultList.appendChild(card);
+    });
+  }
 
     document.getElementById("searchInput").addEventListener("input", renderGrid);
 

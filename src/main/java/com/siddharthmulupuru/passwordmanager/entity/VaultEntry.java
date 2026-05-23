@@ -37,6 +37,7 @@ public class VaultEntry {
 
     @Column(columnDefinition = "TEXT")
     private String encryptedWebsite;
+    
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
