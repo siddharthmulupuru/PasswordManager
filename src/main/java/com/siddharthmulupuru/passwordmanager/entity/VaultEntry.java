@@ -3,6 +3,7 @@ package com.siddharthmulupuru.passwordmanager.entity;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -18,12 +19,23 @@ public class VaultEntry {
 
     @Id
     private UUID id;
-    
+
+    @Column(columnDefinition = "TEXT")
     private String encryptedName;
+
+    @Column(columnDefinition = "TEXT")
     private String encryptedDescription;
+
+    @Column(columnDefinition = "TEXT")
     private String encryptedWebsiteUsername;
+
+    @Column(columnDefinition = "TEXT")
     private String encryptedWebsiteEmail;
+
+    @Column(columnDefinition = "TEXT")
     private String encryptedWebsitePassword;
+
+    @Column(columnDefinition = "TEXT")
     private String encryptedWebsite;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
