@@ -503,6 +503,13 @@
         Vault
       </div>
       <div class="nav-actions">
+        <button id="syncBtn" class="icon-btn" title="Sync">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
         <button id="accountBtn" class="icon-btn" title="Account Settings">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="7" r="4"></circle>
@@ -716,10 +723,16 @@
       sessionStorage.clear();
       encryptionKey = null;
       globalVaultEntries = [];
+      document.getElementById("searchInput").value = '';
       document.getElementById("vaultList").innerHTML = '';
       document.getElementById("username").value = '';
       document.getElementById("password").value = '';
-      showView("login");
+      window.location.reload();
+    };
+
+    // --- Sync ---
+    document.getElementById("syncBtn").onclick = async () => {
+      await loadVault();
     };
 
     // -- Render Grid --
